@@ -1,0 +1,16 @@
+services:
+  olmocr:
+    build: .
+    volumes:
+      # Mount your Windows folder to /data inside the container
+      - ./images:/data
+    # Override the default CMD to accept image path as argument
+    command: python renamer.py /data/test.jpg
+    # Enable GPU access
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
