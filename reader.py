@@ -18,5 +18,7 @@ def read_images(image_files):
     subprocess.run([
         'python', '-m', 'olmocr.pipeline',
         '/tmp/olmocr_output',
+        '--gpu-memory-utilization', '0.80',
+        '--max_model_len', '8192',
         '--pdfs'] + image_files
     )
