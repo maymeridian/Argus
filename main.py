@@ -1,5 +1,6 @@
 from reader import get_image_files, read_images
 from matcher import match_photos
+from renamer import rename_files
 
 if __name__ == "__main__":
     directory = '/data'
@@ -16,4 +17,6 @@ if __name__ == "__main__":
 
     # Match prop photos with their COAs
     photo_pairs = match_photos(image_files)
-    print(photo_pairs)
+
+    # Rename files based on COA titles
+    rename_files(photo_pairs)

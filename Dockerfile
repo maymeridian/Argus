@@ -17,6 +17,7 @@ WORKDIR /app
 COPY main.py .
 COPY reader.py .
 COPY matcher.py .
+COPY renamer.py .
 
 # Run the main script
 CMD ["python", "main.py"]
