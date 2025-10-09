@@ -4,8 +4,8 @@ services:
     volumes:
       # Mount your Windows folder to /data inside the container
       - ./images:/data
-    # Override the default CMD to accept image path as argument
-    command: python renamer.py /data/test.jpg
+      # Mount output folder to persist OCR results
+      - ./output:/tmp/olmocr_output
     # Enable GPU access
     deploy:
       resources:

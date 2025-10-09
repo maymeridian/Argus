@@ -14,7 +14,9 @@ RUN pip install --no-cache-dir olmocr[gpu] vllm
 WORKDIR /app
 
 # Copy application files
-COPY renamer.py .
+COPY main.py .
+COPY reader.py .
+COPY matcher.py .
 
-# Run the renamer script
-CMD ["python", "renamer.py"]
+# Run the main script
+CMD ["python", "main.py"]
