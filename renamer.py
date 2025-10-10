@@ -15,10 +15,11 @@ def extract_item_description(coa_text):
     # Look for text between item code and 'was used in'
     match = re.search(r'EXPANSE\d+\s+(.+?)\s+was used in', coa_text, re.IGNORECASE | re.DOTALL)
     if match:
-        # Clean up the description: remove extra whitespace, convert to title case
+        # Clean up the description: remove extra whitespace, convert to uppercase for consistency
         description = match.group(1).strip()
         description = re.sub(r'\s+', '-', description)  # Replace spaces with hyphens
         description = re.sub(r'[^\w\-]', '', description)  # Remove special characters
+        description = description.upper()  # Convert everything to uppercase for consistency
         return description
     return None
 

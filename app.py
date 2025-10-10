@@ -31,12 +31,17 @@ st.markdown("<h1 style='text-align: center; font-size: 3.5rem;'>👁️ Argus �
 st.markdown("<p style='text-align: center; font-weight: bold;'>The All-Seeing Photo Renamer</p>", unsafe_allow_html=True)
 st.markdown("<p style='text-align: center;'>Upload your prop photos and COA images to automatically rename them based on the COA titles.</p>", unsafe_allow_html=True)
 
+# Initialize uploader key in session state
+if 'uploader_key' not in st.session_state:
+    st.session_state.uploader_key = 0
+
 # Main upload area
 uploaded_files = st.file_uploader(
     "Upload Images",
     type=['jpg', 'jpeg', 'png', 'JPG', 'JPEG', 'PNG'],
     accept_multiple_files=True,
-    label_visibility="collapsed"
+    label_visibility="collapsed",
+    key=f"uploader_{st.session_state.uploader_key}"
 )
 
 # Display uploaded files
@@ -67,7 +72,15 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 if st.button("▶ Process and Rename", disabled=not uploaded_files or st.session_state.processing, use_container_width=True):
-    st.session_state.start_processing = True
+    if not st.session_state.processing:  # Extra safety check
+        st.session_state.start_processing = True
+        st.session_state.processing = True  # Immediately set to prevent double-clicks
+        st.rerun()  # Force immediate rerun to disable button
+
+# Create placeholders for processing UI elements (below button, above settings)
+progress_placeholder = st.empty()
+status_placeholder = st.empty()
+output_expander_placeholder = st.container()
 
 # Settings
 with st.expander("⚙️ Settings"):
@@ -87,7 +100,6 @@ with st.expander("ℹ️ How to use"):
 
 # Process button logic
 if st.session_state.get('start_processing', False):
-    st.session_state.processing = True
     st.session_state.start_processing = False
 
     try:
@@ -103,8 +115,9 @@ if st.session_state.get('start_processing', False):
             for f in images_dir.glob("*"):
                 f.unlink()
 
-        progress_bar = st.progress(0)
-        status_text = st.empty()
+        # Use the placeholders created earlier
+        progress_bar = progress_placeholder.progress(0)
+        status_text = status_placeholder.empty()
 
         # Save uploaded files
         with st.spinner("Saving uploaded files..."):
@@ -153,10 +166,10 @@ if st.session_state.get('start_processing', False):
         status_text.text("👁️ Argus is reading your images...")
         progress_bar.progress(0.5)
 
-        # Create a container with custom CSS for fixed height
-        output_container = st.container()
-        with output_container:
-            output_placeholder = st.empty()
+        # Create an expander for the processing output in the placeholder container
+        with output_expander_placeholder:
+            with st.expander("📋 Console", expanded=False):
+                output_placeholder = st.empty()
 
         # Run Docker with streaming output
         # Note: --rm removes container after exit, --remove-orphans cleans up old containers
@@ -213,13 +226,32 @@ if st.session_state.get('start_processing', False):
 
             zip_buffer.seek(0)
 
-            # Download button
-            st.download_button(
-                label="📥 Download Renamed Files",
+            # Download button with callback to clear files after download
+            if st.download_button(
+                label="📥 Download All Renamed Files (ZIP)",
                 data=zip_buffer,
                 file_name="renamed_images.zip",
-                mime="application/zip"
-            )
+                mime="application/zip",
+                on_click=lambda: st.session_state.update({'clear_and_reset': True})
+            ):
+                pass  # Download initiated
+
+            # Clear files only after download button is clicked
+            if st.session_state.get('clear_and_reset', False):
+                # Clear the images folder
+                for file in images_dir.glob("*"):
+                    if file.is_file():
+                        file.unlink()
+
+                # Reset states
+                st.session_state.uploader_key += 1
+                st.session_state.clear_and_reset = False
+                st.success("✅ Files downloaded and cleared. Ready for next batch!")
+
+                # Wait a moment then rerun to reset the UI
+                import time
+                time.sleep(1)
+                st.rerun()
         else:
             status_text.empty()
             st.error("❌ Error processing files. Check the output above for details.")
