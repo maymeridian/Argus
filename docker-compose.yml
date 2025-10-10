@@ -10,9 +10,7 @@ services:
       - ./huggingface_cache:/root/.cache/huggingface
       # Mount code files so changes are reflected immediately without rebuilding
       - ./main.py:/app/main.py
-      - ./reader.py:/app/reader.py
-      - ./matcher.py:/app/matcher.py
-      - ./renamer.py:/app/renamer.py
+      - ./handler:/app/handler
       # Mount application folder for Streamlit imports
       - ./application:/app/application
     # Enable GPU access

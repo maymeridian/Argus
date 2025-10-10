@@ -84,11 +84,17 @@ Automatically rename prop photos based on their Certificate of Authenticity (COA
 
 ```
 prop-renamer/
-├── app.py              # Streamlit GUI
 ├── main.py             # Main processing script
-├── reader.py           # OCR reading functionality
-├── matcher.py          # COA detection and matching
-├── renamer.py          # File renaming logic
+├── application/        # Streamlit GUI application
+│   ├── app.py          # Main Streamlit app
+│   ├── ui_components.py
+│   ├── processing.py
+│   ├── file_operations.py
+│   └── config.py
+├── handler/            # Core processing modules
+│   ├── reader.py       # OCR reading functionality
+│   ├── matcher.py      # COA detection and matching
+│   └── renamer.py      # File renaming logic
 ├── Dockerfile          # Docker image configuration
 ├── docker-compose.yml  # Docker compose setup
 ├── requirements.txt    # Python dependencies

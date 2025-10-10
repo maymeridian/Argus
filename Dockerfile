@@ -15,9 +15,7 @@ WORKDIR /app
 
 # Copy application files
 COPY main.py .
-COPY reader.py .
-COPY matcher.py .
-COPY renamer.py .
+COPY handler/ handler/
 
 # Run the main script
 CMD ["python", "main.py"]

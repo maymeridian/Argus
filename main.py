@@ -10,9 +10,9 @@ import sys
 # Check if running inside Docker container
 if os.path.exists('/data') and 'streamlit' not in sys.argv[0].lower():
     # Running inside Docker - execute OCR pipeline
-    from reader import get_image_files, read_images
-    from matcher import match_photos
-    from renamer import rename_files
+    from handler.reader import get_image_files, read_images
+    from handler.matcher import match_photos
+    from handler.renamer import rename_files
 
     if __name__ == "__main__":
         directory = '/data'
