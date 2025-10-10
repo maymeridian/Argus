@@ -1,14 +1,22 @@
+"""
+Contains the methods to get and read image files.
+"""
+
 import os
 import subprocess
 import glob
+
 
 def get_image_files(directory):
     """Get all image files in the directory."""
     image_extensions = ['*.jpg', '*.jpeg', '*.png', '*.JPG', '*.JPEG', '*.PNG']
     image_files = []
+
     for ext in image_extensions:
         image_files.extend(glob.glob(os.path.join(directory, ext)))
+
     return image_files
+
 
 def read_images(image_files):
     """Run olmOCR on all images."""

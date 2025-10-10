@@ -1,14 +1,22 @@
+"""
+Matches prop photos with their corresponding COAs by analyzing
+OCR results and identifying COA indicators in the text.
+"""
+
 import os
 import json
 import glob
 
+
 def load_ocr_results(output_dir='/tmp/olmocr_output'):
     """Load OCR results from all JSONL files."""
     jsonl_files = glob.glob(os.path.join(output_dir, 'results', '*.jsonl'))
+    
     if not jsonl_files:
         return {}
 
     ocr_data = {}
+    
     for jsonl_file in jsonl_files:
         with open(jsonl_file, 'r') as f:
             for line in f:
@@ -17,12 +25,14 @@ def load_ocr_results(output_dir='/tmp/olmocr_output'):
                 ocr_data[source_file] = entry['text']
     return ocr_data
 
+
 def is_coa(text):
     """Check if OCR text contains COA indicators."""
     if not text:
         return False
 
     text_upper = text.upper()
+
     coa_indicators = [
         'DOCUMENT CERTIFIES',
         'PRODUCTION OF',
@@ -37,6 +47,7 @@ def is_coa(text):
 
     # If 2 or more indicators found, it's likely a COA
     return matches >= 2
+
 
 def match_photos(image_files, output_dir='/tmp/olmocr_output'):
     """

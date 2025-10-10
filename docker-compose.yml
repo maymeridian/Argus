@@ -13,6 +13,8 @@ services:
       - ./reader.py:/app/reader.py
       - ./matcher.py:/app/matcher.py
       - ./renamer.py:/app/renamer.py
+      # Mount application folder for Streamlit imports
+      - ./application:/app/application
     # Enable GPU access
     deploy:
       resources:

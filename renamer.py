@@ -1,31 +1,42 @@
+"""
+Renames image files based on extracted COA information including item codes and descriptions.
+"""
+
 import os
 import re
 import json
 from matcher import load_ocr_results
 
+
 def extract_item_code(coa_text):
     """Extract item code from COA text (e.g., 'EXPANSE7586', 'RIVERDALE0385', 'SUP&LOIS0358')."""
-    # Look for pattern: uppercase letters (and &) followed by 4-5 digits
-    # Examples: EXPANSE7586, RIVERDALE0385, SUP&LOIS0358
-    match = re.search(r'[A-Z&]+\d{4,5}', coa_text)
+    # Look for pattern: letters (case-insensitive, and &) followed by 4-5 digits
+    # Examples: EXPANSE7586, EXpanse7581, RIVERDALE0385, SUP&LOIS0358
+    match = re.search(r'[A-Za-z&]+\d{4,5}', coa_text)
     if match:
         return match.group(0).upper()  # Always return uppercase
     return None
 
+
 def extract_item_description(coa_text):
     """Extract item description from COA text."""
     # Look for text between item code and 'was used in'
-    # Item code pattern: uppercase letters (and &) followed by 4-5 digits
-    match = re.search(r'[A-Z&]+\d{4,5}\s+(.+?)\s+was used in', coa_text, re.IGNORECASE | re.DOTALL)
+    # Item code pattern: letters (case-insensitive, and &) followed by 4-5 digits
+    match = re.search(r'[A-Za-z&]+\d{4,5}\s+(.+?)\s+was used in', coa_text, re.IGNORECASE | re.DOTALL)
+
     if match:
         # Clean up the description: remove extra whitespace, convert to title case
         description = match.group(1).strip()
+
         # Convert to title case before replacing spaces
         description = description.title()
         description = re.sub(r'\s+', '-', description)  # Replace spaces with hyphens
         description = re.sub(r'[^\w\-]', '', description)  # Remove special characters
+
         return description
+
     return None
+
 
 def rename_files(photo_pairs, output_dir='/tmp/olmocr_output'):
     """Rename files based on COA titles."""
@@ -78,10 +89,13 @@ def rename_files(photo_pairs, output_dir='/tmp/olmocr_output'):
                 coa_files.append(new_name)
 
             os.rename(image_file, new_path)
+
             print(f"Renamed: {image_file} -> {new_path}")
 
     # Save the list of COA files
     coa_list_file = os.path.join('/tmp/olmocr_output', 'coa_files.json')
+
     with open(coa_list_file, 'w') as f:
         json.dump(coa_files, f)
+
     print(f"\nSaved COA file list to {coa_list_file}")

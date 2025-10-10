@@ -24,5 +24,5 @@ if %errorlevel% neq 0 (
 )
 
 echo.
-streamlit run app.py --browser.gatherUsageStats false
+streamlit run main.py --browser.gatherUsageStats false
 pause
