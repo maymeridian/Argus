@@ -42,6 +42,20 @@ def main():
     # Initialize session state
     initialize_session_state()
 
+    # Handle cleanup after download (must be at top level to catch button clicks)
+    if st.session_state.get('clear_and_reset', False):
+        deleted_count, cleanup_errors = cleanup_folders(Path("images"))
+        st.session_state.uploader_key += 1
+        st.session_state.clear_and_reset = False
+
+        if cleanup_errors:
+            st.warning(f"⚠️ Deleted {deleted_count} files. Failed to delete {len(cleanup_errors)} files:\n" + "\n".join(cleanup_errors[:5]))
+        else:
+            st.success(f"✅ Files downloaded and cleared ({deleted_count} files deleted). Ready for next batch!")
+
+        time.sleep(1)
+        st.rerun()
+
     # Render UI components
     render_title()
 
@@ -120,31 +134,13 @@ def main():
                 zip_buffer = create_download_zip(images_dir, exclude_coa)
 
                 # Download button with callback to clear files after download
-                if st.download_button(
+                st.download_button(
                     label="📥 Download All Renamed Files (ZIP)",
                     data=zip_buffer,
                     file_name="renamed_images.zip",
                     mime="application/zip",
                     on_click=lambda: st.session_state.update({'clear_and_reset': True})
-                ):
-                    pass  # Download initiated
-
-                # Clear files only after download button is clicked
-                if st.session_state.get('clear_and_reset', False):
-                    deleted_count, cleanup_errors = cleanup_folders(images_dir)
-
-                    # Reset states
-                    st.session_state.uploader_key += 1
-                    st.session_state.clear_and_reset = False
-
-                    if cleanup_errors:
-                        st.warning(f"⚠️ Deleted {deleted_count} files. Failed to delete {len(cleanup_errors)} files:\n" + "\n".join(cleanup_errors[:5]))
-                    else:
-                        st.success(f"✅ Files downloaded and cleared ({deleted_count} files deleted). Ready for next batch!")
-
-                    # Wait a moment then rerun to reset the UI
-                    time.sleep(1)
-                    st.rerun()
+                )
             else:
                 status_text.empty()
                 st.error("❌ Error processing files. Check the output above for details.")
