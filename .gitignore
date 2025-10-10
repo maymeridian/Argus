@@ -1,0 +1,29 @@
+# Hugging Face model cache (can be multiple GB)
+huggingface_cache/
+
+# OCR output
+output/
+
+# Uploaded images
+images/
+
+# Backup files
+backup/
+
+# Logs
+*.log
+argus_log.txt
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+
+# OS files
+.DS_Store
+Thumbs.db

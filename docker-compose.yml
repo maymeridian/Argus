@@ -6,6 +6,13 @@ services:
       - ./images:/data
       # Mount output folder to persist OCR results
       - ./output:/tmp/olmocr_output
+      # Persist Hugging Face cache to avoid redownloading models
+      - ./huggingface_cache:/root/.cache/huggingface
+      # Mount code files so changes are reflected immediately without rebuilding
+      - ./main.py:/app/main.py
+      - ./reader.py:/app/reader.py
+      - ./matcher.py:/app/matcher.py
+      - ./renamer.py:/app/renamer.py
     # Enable GPU access
     deploy:
       resources:
