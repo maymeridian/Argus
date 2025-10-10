@@ -1,6 +1,9 @@
 @echo off
 echo Starting Argus - The All-Seeing Photo Renamer...
 
+REM Change to the directory where this batch file is located
+cd /d "%~dp0"
+
 REM Check if Docker Desktop is running
 echo Checking Docker Desktop status...
 docker info >nul 2>&1

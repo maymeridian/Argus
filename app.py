@@ -84,8 +84,22 @@ output_expander_placeholder = st.container()
 
 # Settings
 with st.expander("⚙️ Settings"):
-    clear_after = st.checkbox("Clear images folder after processing", value=False, key="clear_after")
-    keep_originals = st.checkbox("Keep original filenames as backup", value=False, key="keep_originals")
+    gpu_memory = st.slider(
+        "GPU Memory Utilization (%)",
+        min_value=10,
+        max_value=100,
+        value=80,
+        step=5,
+        key="gpu_memory_utilization",
+        help="Percentage of GPU memory to use for OCR processing. Lower values use less memory but may be slower."
+    )
+
+    exclude_coa = st.checkbox(
+        "Exclude COA images from download",
+        value=True,
+        key="exclude_coa_from_zip",
+        help="When enabled, only prop photos will be included in the ZIP download (COA images will be excluded)."
+    )
 
 # Instructions
 with st.expander("ℹ️ How to use"):
@@ -110,11 +124,6 @@ if st.session_state.get('start_processing', False):
         images_dir = Path("images")
         images_dir.mkdir(exist_ok=True)
 
-        # Clear existing files if needed
-        if st.session_state.get("clear_after", False):
-            for f in images_dir.glob("*"):
-                f.unlink()
-
         # Use the placeholders created earlier
         progress_bar = progress_placeholder.progress(0)
         status_text = status_placeholder.empty()
@@ -127,15 +136,6 @@ if st.session_state.get('start_processing', False):
                 with open(file_path, "wb") as f:
                     f.write(uploaded_file.getbuffer())
                 progress_bar.progress((idx + 1) / len(uploaded_files) * 0.3)
-
-        # Backup original files if requested
-        if st.session_state.get("keep_originals", False):
-            backup_dir = Path("backup")
-            backup_dir.mkdir(exist_ok=True)
-            status_text.text("💾 Creating backup of original files...")
-            for file in images_dir.glob("*"):
-                if file.is_file():
-                    shutil.copy2(file, backup_dir / file.name)
 
         # Check if Docker image exists, build if needed
         check_image = subprocess.run(
@@ -173,14 +173,24 @@ if st.session_state.get('start_processing', False):
 
         # Run Docker with streaming output
         # Note: --rm removes container after exit, --remove-orphans cleans up old containers
+        # Get GPU memory setting and convert percentage to decimal
+        gpu_mem_percent = st.session_state.get('gpu_memory_utilization', 80)
+        gpu_mem_decimal = gpu_mem_percent / 100.0
+
+        # Set up environment variables for Docker
+        docker_env = os.environ.copy()
+        docker_env['GPU_MEMORY_UTILIZATION'] = str(gpu_mem_decimal)
+
         process = subprocess.Popen(
-            ["docker", "compose", "run", "--rm", "--remove-orphans", "olmocr"],
+            ["docker", "compose", "run", "--rm", "--remove-orphans",
+             "-e", f"GPU_MEMORY_UTILIZATION={gpu_mem_decimal}", "olmocr"],
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
             encoding='utf-8',
             errors='replace',
-            bufsize=1
+            bufsize=1,
+            env=docker_env
         )
 
         # Stream output to the UI and log file
@@ -216,12 +226,28 @@ if st.session_state.get('start_processing', False):
             status_text.empty()
             st.success("✅ Files processed and renamed successfully!")
 
-            # Create zip file of all renamed images
+            # Create zip file of renamed images (optionally excluding COA files)
             renamed_files = sorted(list(images_dir.glob("*")))
+            exclude_coa = st.session_state.get('exclude_coa_from_zip', True)
+
+            # Load the list of COA files from the output directory
+            coa_files = []
+            coa_list_file = Path("output") / "coa_files.json"
+            if coa_list_file.exists():
+                try:
+                    import json
+                    with open(coa_list_file, 'r') as f:
+                        coa_files = json.load(f)
+                except Exception as e:
+                    st.warning(f"Could not load COA list: {e}")
+
             zip_buffer = BytesIO()
             with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
                 for file in renamed_files:
                     if file.is_file():
+                        # Skip COA files if setting is enabled
+                        if exclude_coa and file.name in coa_files:
+                            continue
                         zip_file.write(file, arcname=file.name)
 
             zip_buffer.seek(0)
@@ -238,18 +264,58 @@ if st.session_state.get('start_processing', False):
 
             # Clear files only after download button is clicked
             if st.session_state.get('clear_and_reset', False):
+                import time
+
+                # Wait a moment for any file handles to be released
+                time.sleep(0.5)
+
+                cleanup_errors = []
+
                 # Clear the images folder
-                for file in images_dir.glob("*"):
-                    if file.is_file():
-                        file.unlink()
+                if images_dir.exists():
+                    for attempt in range(3):  # Try up to 3 times
+                        try:
+                            for file in images_dir.glob("*"):
+                                if file.is_file():
+                                    try:
+                                        file.unlink()
+                                    except Exception as e:
+                                        cleanup_errors.append(f"Failed to delete {file.name}: {e}")
+                            break  # Success, exit retry loop
+                        except Exception as e:
+                            if attempt < 2:
+                                time.sleep(0.5)  # Wait before retry
+                            else:
+                                cleanup_errors.append(f"Images folder cleanup failed: {e}")
+
+                # Clear the output folder
+                output_dir = Path("output")
+                if output_dir.exists():
+                    for attempt in range(3):  # Try up to 3 times
+                        try:
+                            for file in output_dir.rglob("*"):
+                                if file.is_file():
+                                    try:
+                                        file.unlink()
+                                    except Exception as e:
+                                        cleanup_errors.append(f"Failed to delete {file.name}: {e}")
+                            break  # Success, exit retry loop
+                        except Exception as e:
+                            if attempt < 2:
+                                time.sleep(0.5)  # Wait before retry
+                            else:
+                                cleanup_errors.append(f"Output folder cleanup failed: {e}")
 
                 # Reset states
                 st.session_state.uploader_key += 1
                 st.session_state.clear_and_reset = False
-                st.success("✅ Files downloaded and cleared. Ready for next batch!")
+
+                if cleanup_errors:
+                    st.warning(f"⚠️ Some files could not be deleted:\n" + "\n".join(cleanup_errors[:3]))
+                else:
+                    st.success("✅ Files downloaded and cleared. Ready for next batch!")
 
                 # Wait a moment then rerun to reset the UI
-                import time
                 time.sleep(1)
                 st.rerun()
         else:

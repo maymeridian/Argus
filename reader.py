@@ -15,10 +15,13 @@ def read_images(image_files):
     print(f"Found {len(image_files)} image(s) to process\n")
     print("Running OCR on all images (this may take a while)...\n")
 
+    # Get GPU memory utilization from environment variable (default to 0.80)
+    gpu_mem = os.environ.get('GPU_MEMORY_UTILIZATION', '0.80')
+
     subprocess.run([
         'python', '-m', 'olmocr.pipeline',
         '/tmp/olmocr_output',
-        '--gpu-memory-utilization', '0.60',
+        '--gpu-memory-utilization', gpu_mem,
         '--max_model_len', '5140',
         '--pdfs'] + image_files
     )
