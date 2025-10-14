@@ -30,6 +30,6 @@ def read_images(image_files):
         'python', '-m', 'olmocr.pipeline',
         '/tmp/olmocr_output',
         '--gpu-memory-utilization', gpu_mem,
-        '--max_model_len', '5048',w
+        '--max_model_len', '5048',
         '--pdfs'] + image_files
     )
