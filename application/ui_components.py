@@ -3,7 +3,10 @@ Reusable UI components for the Argus application.
 """
 
 import streamlit as st
-from application.config import DEFAULT_GPU_MEMORY, GPU_MEMORY_MIN, GPU_MEMORY_MAX, GPU_MEMORY_STEP
+from application.config import (
+    DEFAULT_GPU_MEMORY, GPU_MEMORY_MIN, GPU_MEMORY_MAX, GPU_MEMORY_STEP,
+    load_settings, save_settings
+)
 
 def render_title():
     """Render the application title and description."""
@@ -33,12 +36,15 @@ def render_process_button(uploaded_files, processing):
 
 def render_settings():
     """Render the settings expander with GPU memory slider and COA exclusion option."""
+    # Load saved settings
+    saved_settings = load_settings()
+
     with st.expander("⚙️ Settings"):
         gpu_memory = st.slider(
             "GPU Memory Utilization (%)",
             min_value=GPU_MEMORY_MIN,
             max_value=GPU_MEMORY_MAX,
-            value=DEFAULT_GPU_MEMORY,
+            value=saved_settings['gpu_memory'],
             step=GPU_MEMORY_STEP,
             key="gpu_memory_utilization",
             help="Percentage of GPU memory to use for OCR processing. Lower values use less memory but may be slower."
@@ -46,10 +52,14 @@ def render_settings():
 
         exclude_coa = st.checkbox(
             "Exclude COA images from download",
-            value=True,
+            value=saved_settings['exclude_coa'],
             key="exclude_coa_from_zip",
             help="When enabled, only prop photos will be included in the ZIP download (COA images will be excluded)."
         )
+
+        # Save settings whenever they change
+        if gpu_memory != saved_settings['gpu_memory'] or exclude_coa != saved_settings['exclude_coa']:
+            save_settings(gpu_memory, exclude_coa)
 
     return gpu_memory, exclude_coa
 

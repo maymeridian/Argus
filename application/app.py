@@ -31,6 +31,8 @@ def initialize_session_state():
         st.session_state.processing = False
     if 'uploader_key' not in st.session_state:
         st.session_state.uploader_key = 0
+    if 'initial_cleanup_done' not in st.session_state:
+        st.session_state.initial_cleanup_done = False
 
 
 def main():
@@ -41,6 +43,18 @@ def main():
 
     # Initialize session state
     initialize_session_state()
+
+    # Perform initial cleanup on program launch (only once per session)
+    if not st.session_state.initial_cleanup_done:
+        images_dir = Path("images")
+        output_dir = Path("output")
+
+        # Only cleanup if folders exist and contain files
+        if (images_dir.exists() and any(images_dir.iterdir())) or \
+           (output_dir.exists() and any(output_dir.iterdir())):
+            cleanup_folders(images_dir)
+
+        st.session_state.initial_cleanup_done = True
 
     # Handle cleanup after download (must be at top level to catch button clicks)
     if st.session_state.get('clear_and_reset', False):
