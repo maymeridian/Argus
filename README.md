@@ -78,7 +78,7 @@ Automatically rename prop photos based on their Certificate of Authenticity (COA
 2. COAs are identified by looking for specific keywords (e.g., "DOCUMENT CERTIFIES", "PRODUCTION OF")
 3. Prop photos are grouped with their corresponding COA (COA always comes after its prop photos)
 4. Files are renamed based on the item code and description from the COA
-   - Format: `EXPANSE####-Description-1.jpg`, `EXPANSE####-Description-2.jpg`, `EXPANSE####-Description-coa.jpg`
+   - Format: `XXXXX####-Description-1.jpg`, `XXXXXE####-Description-2.jpg`, `XXXXX####-Description-coa.jpg`
 
 ## Project Structure
 
