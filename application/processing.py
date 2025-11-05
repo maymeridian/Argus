@@ -10,7 +10,7 @@ from pathlib import Path
 def check_docker_image():
     """Check if Docker image exists."""
     check_image = subprocess.run(
-        ["docker", "images", "-q", "prop-renamer-olmocr"],
+        ["docker", "images", "-q", "argus-olmocr"],
         capture_output=True,
         text=True
     )

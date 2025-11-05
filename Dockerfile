@@ -8,7 +8,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Install olmOCR with GPU support
-RUN pip install --no-cache-dir olmocr[gpu] vllm
+RUN pip install --no-cache-dir olmocr[gpu]==0.3.9 vllm==0.11.0
 
 # Set working directory
 WORKDIR /app
