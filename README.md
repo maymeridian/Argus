@@ -24,32 +24,17 @@ Automatically rename prop photos based on their Certificate of Authenticity (COA
 1. **Clone the repository**
    ```bash
    git clone <repository-url>
-   cd prop-renamer
    ```
 
-2. **Install Python dependencies**
+2. **Run Setup.bat**
    ```bash
-   pip install -r requirements.txt
-   ```
-
-3. **Install Docker Desktop**
-   - Download from [docker.com](https://www.docker.com/products/docker-desktop)
-   - Enable WSL2 backend (Windows only)
-   - Install NVIDIA Container Toolkit for GPU support
-
-4. **Build the Docker image**
-   ```bash
-   docker compose build
+   start setup.bat
    ```
 
 ## Usage
 
-### GUI Method (Recommended)
-
 1. **Start the Streamlit app**
-   ```bash
-   streamlit run app.py
-   ```
+   start run_argus.bat
 
 2. **Open your browser** to `http://localhost:8501`
 
@@ -60,17 +45,6 @@ Automatically rename prop photos based on their Certificate of Authenticity (COA
 5. **Click "Process and Rename"** and wait for the processing to complete
 
 6. **Download your renamed files** from the images folder
-
-### Command Line Method
-
-1. **Place your images** in the `images` folder
-
-2. **Run the Docker container**
-   ```bash
-   docker compose up
-   ```
-
-3. **Check the `images` folder** for renamed files
 
 ## How It Works
 
@@ -84,6 +58,8 @@ Automatically rename prop photos based on their Certificate of Authenticity (COA
 
 ```
 prop-renamer/
+├── run_argus.bat       # Launch program
+├── setup.bat           # Load requirements
 ├── main.py             # Main processing script
 ├── application/        # Streamlit GUI application
 │   ├── app.py          # Main Streamlit app

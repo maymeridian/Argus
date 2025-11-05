@@ -29,6 +29,7 @@ def read_images(image_files):
     subprocess.run([
         'python', '-m', 'olmocr.pipeline',
         '/tmp/olmocr_output',
+        '--model', 'allenai/olmOCR-2-7B-1025-FP8',
         '--gpu-memory-utilization', gpu_mem,
         '--max_model_len', '5048',
         '--pdfs'] + image_files
