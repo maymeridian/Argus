@@ -1,6 +1,7 @@
 services:
   olmocr:
     build: .
+    image: argus-olmocr
     volumes:
       # Mount your Windows folder to /data inside the container
       - ./images:/data
