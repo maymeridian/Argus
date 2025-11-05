@@ -120,27 +120,7 @@ if errorlevel 1 (
     )
 )
 echo.
-REM Stop any existing containers
-echo Stopping any existing containers...
-docker compose down >nul 2>&1
-echo [OK] Cleaned up existing containers
-echo.
-REM Build the Docker image
-echo Building Docker image (this may take several minutes)...
-echo This step installs olmOCR and all dependencies.
-echo.
-docker compose build
-if errorlevel 1 (
-    echo.
-    echo [ERROR] Docker build failed!
-    echo Please check the error messages above.
-    pause
-    exit /b 1
-)
-echo.
-echo [OK] Docker image built successfully
-echo.
 echo ============================================
-echo Setup Complete! Run run_argus.bat to begin!
+echo Setup Complete! Run run_argus.bat to start!
 echo ============================================
 pause
