@@ -12,7 +12,7 @@ def extract_item_code(coa_text):
     """Extract item code from COA text (e.g., 'EXPANSE7586', 'RIVERDALE0385', 'SUP&LOIS0358')."""
     # Look for pattern: letters (case-insensitive, and &) followed by 4-5 digits
     # Examples: EXPANSE7586, EXpanse7581, RIVERDALE0385, SUP&LOIS0358
-    match = re.search(r'[A-Za-z&]+\d{4,5}', coa_text)
+    match = re.search(r'[A-Za-z&]+\d{4,7}', coa_text)
     if match:
         return match.group(0).upper()  # Always return uppercase
     return None
