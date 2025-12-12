@@ -1,0 +1,16 @@
+{
+    "APPEND_ORIGINAL_NAME": false,
+    "DISCARD_COA": true,
+    "SAVE_DEBUG_LOGS": false,
+    "COA_INDICATORS": [
+        "DOCUMENT CERTIFIES",
+        "PRODUCTION OF",
+        "WAS USED IN",
+        "WWW.PROPABILIA",
+        "AUTHORIZED",
+        "MEMORABILIA",
+        "CERTIFICATE OF AUTHENTICITY",
+        "PROPABILIA"
+    ],
+    "OUTPUT_FOLDER": "C:/Users/maxim/Desktop/Destination"
+}

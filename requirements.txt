@@ -1,0 +1,4 @@
+customtkinter
+rapidocr-onnxruntime
+Pillow
+pyinstaller
