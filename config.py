@@ -8,15 +8,31 @@ from pathlib import Path
 # ==========================================
 APPEND_ORIGINAL_NAME = False
 DISCARD_COA = False
-SAVE_DEBUG_LOGS = True  # NEW: Toggle for .md text files
+SAVE_DEBUG_LOGS = True 
 
 # Default to "Output" folder next to the app
 OUTPUT_FOLDER = str(fm.get_application_path() / "Output")
 
-COA_INDICATORS = [
-    'DOCUMENT CERTIFIES', 'PRODUCTION OF', 'WAS USED IN',
-    'WWW.PROPABILIA', 'AUTHORIZED', 'MEMORABILIA',
-    'CERTIFICATE OF AUTHENTICITY', 'PROPABILIA'
+# NEW: Split indicators for smarter detection
+STRONG_INDICATORS = [
+    'CERTIFICATE OF AUTHENTICITY', 
+    'THIS DOCUMENT CERTIFIES', 
+    'WAS USED IN THE PRODUCTION',
+    'PRODUCTION OF THE ABOVE'
+]
+
+WEAK_INDICATORS = [
+    'PROPABILIA', 
+    'MEMORABILIA', 
+    'AUTHORIZED SIGNATURE', 
+    'MOVIE & TV',
+    'OFFICIAL PROP'
+]
+
+# NEW: Acronyms that should always be fully capitalized
+# (Prevents them from becoming "Gcpd" or "Aka" via Title Case)
+FORCE_UPPERCASE = [
+    'GCPD', 'CIA', 'FBI', 'AKA', 'USA', 'UN', 'SSD', 'DHD', 'NASA'
 ]
 
 # ==========================================
@@ -26,7 +42,8 @@ def get_settings_path():
     return fm.get_application_path() / "settings.json"
 
 def load():
-    global APPEND_ORIGINAL_NAME, DISCARD_COA, SAVE_DEBUG_LOGS, COA_INDICATORS, OUTPUT_FOLDER
+    global APPEND_ORIGINAL_NAME, DISCARD_COA, SAVE_DEBUG_LOGS, OUTPUT_FOLDER
+    global STRONG_INDICATORS, WEAK_INDICATORS, FORCE_UPPERCASE
     
     path = get_settings_path()
     if not path.exists():
@@ -39,8 +56,12 @@ def load():
         if "APPEND_ORIGINAL_NAME" in data: APPEND_ORIGINAL_NAME = data["APPEND_ORIGINAL_NAME"]
         if "DISCARD_COA" in data: DISCARD_COA = data["DISCARD_COA"]
         if "SAVE_DEBUG_LOGS" in data: SAVE_DEBUG_LOGS = data["SAVE_DEBUG_LOGS"]
-        if "COA_INDICATORS" in data: COA_INDICATORS = data["COA_INDICATORS"]
         if "OUTPUT_FOLDER" in data: OUTPUT_FOLDER = data["OUTPUT_FOLDER"]
+        
+        # Load lists
+        if "STRONG_INDICATORS" in data: STRONG_INDICATORS = data["STRONG_INDICATORS"]
+        if "WEAK_INDICATORS" in data: WEAK_INDICATORS = data["WEAK_INDICATORS"]
+        if "FORCE_UPPERCASE" in data: FORCE_UPPERCASE = data["FORCE_UPPERCASE"]
             
         print(f"✅ Config loaded from {path.name}")
     except Exception as e:
@@ -51,8 +72,10 @@ def save():
         "APPEND_ORIGINAL_NAME": APPEND_ORIGINAL_NAME,
         "DISCARD_COA": DISCARD_COA,
         "SAVE_DEBUG_LOGS": SAVE_DEBUG_LOGS,
-        "COA_INDICATORS": COA_INDICATORS,
-        "OUTPUT_FOLDER": OUTPUT_FOLDER
+        "OUTPUT_FOLDER": OUTPUT_FOLDER,
+        "STRONG_INDICATORS": STRONG_INDICATORS,
+        "WEAK_INDICATORS": WEAK_INDICATORS,
+        "FORCE_UPPERCASE": FORCE_UPPERCASE
     }
     
     try:

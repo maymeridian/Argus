@@ -1,16 +1,31 @@
 {
-    "APPEND_ORIGINAL_NAME": false,
-    "DISCARD_COA": true,
-    "SAVE_DEBUG_LOGS": false,
-    "COA_INDICATORS": [
-        "DOCUMENT CERTIFIES",
-        "PRODUCTION OF",
-        "WAS USED IN",
-        "WWW.PROPABILIA",
-        "AUTHORIZED",
-        "MEMORABILIA",
+    "APPEND_ORIGINAL_NAME": true,
+    "DISCARD_COA": false,
+    "SAVE_DEBUG_LOGS": true,
+    "OUTPUT_FOLDER": "C:/Users/maxim/Desktop/Output",
+    "STRONG_INDICATORS": [
         "CERTIFICATE OF AUTHENTICITY",
-        "PROPABILIA"
+        "THIS DOCUMENT CERTIFIES",
+        "WAS USED IN THE PRODUCTION",
+        "PRODUCTION OF THE ABOVE"
     ],
-    "OUTPUT_FOLDER": "C:/Users/maxim/Desktop/Destination"
+    "WEAK_INDICATORS": [
+        "PROPABILIA",
+        "MEMORABILIA",
+        "AUTHORIZED SIGNATURE",
+        "MOVIE & TV",
+        "OFFICIAL PROP"
+    ],
+    "FORCE_UPPERCASE": [
+        "GCPD",
+        "CIA",
+        "FBI",
+        "AKA",
+        "USA",
+        "UN",
+        "SSD",
+        "DHD",
+        "NASA",
+        "BCPD"
+    ]
 }
