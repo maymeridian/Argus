@@ -1,4 +1,11 @@
-"""Configuration settings for Argus 2.0."""
+"""
+config.py
+
+Author: maymeridian
+Description: Manages global configuration settings, persistence logic for user preferences,
+             and detection lists (Strong/Weak indicators, Uppercase exceptions) for Argus.
+"""
+
 import json
 import file_manager as fm
 from pathlib import Path
