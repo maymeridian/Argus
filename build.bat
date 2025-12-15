@@ -7,14 +7,12 @@ rmdir /s /q dist
 del /q *.spec
 
 :: 2. Run PyInstaller
-:: --noconfirm: Don't ask to overwrite
-:: --onedir: Keep it as a folder (Faster start)
-:: --windowed: No black console window
-:: --add-data: Includes necessary folders and files (Libraries, Config, Icons)
-:: --collect-all: Ensures CustomTkinter and OCR themes/configs are included
+:: --icon: Sets the actual .exe file icon in Windows Explorer
+:: --add-data: Bundles the file so the app can use it for the Taskbar/Window title
 
 pyinstaller --noconfirm --onedir --windowed ^
     --name "Argus" ^
+    --icon "icon.ico" ^
     --add-data "libraries;libraries" ^
     --add-data "settings.json;." ^
     --add-data "icon.ico;." ^
