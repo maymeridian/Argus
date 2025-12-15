@@ -4,28 +4,78 @@ gui.py
 Author: maymeridian
 Description: The graphical user interface for Argus. Built with CustomTkinter, it handles
              user interaction, settings configuration, taskbar integration, and visual feedback.
+             Includes logic for injecting local GPU dependencies.
 """
 
+import os
+import sys
 import threading
 import ctypes
+import logging
 from pathlib import Path
 from typing import List
-from tkinter import filedialog, PhotoImage
 
+# ==========================================
+# DLL INJECTION (GPU SUPPORT)
+# ==========================================
+# This block must execute before importing 'onnxruntime' or 'main'
+# to ensure Windows finds the local NVIDIA DLLs.
+
+def _inject_gpu_libraries():
+    """
+    Forces the local 'libraries' folder into the Windows DLL search path.
+    """
+    if sys.platform != "win32":
+        return
+
+    base_path = Path(__file__).resolve().parent
+    libs_path = base_path / "libraries"
+
+    if libs_path.exists():
+        # 1. Force into Environment PATH (The "Aggressive" Fix)
+        # This allows DLLs to find *other* DLLs in the same folder
+        os.environ["PATH"] = str(libs_path) + os.pathsep + os.environ["PATH"]
+        
+        # 2. The Standard Python 3.8+ Fix
+        try:
+            os.add_dll_directory(str(libs_path))
+        except Exception:
+            pass
+            
+        print(f"✅ Injected GPU libraries from: {libs_path}")
+    else:
+        print(f"❌ WARNING: 'libraries' folder missing at: {libs_path}")
+
+_inject_gpu_libraries()
+
+# ==========================================
+# IMPORTS
+# ==========================================
+
+from tkinter import filedialog, PhotoImage
 import customtkinter as ctk
+
+# Application Modules
 import main
 import file_manager as fm
 import config
 
-# --- THEME SETUP ---
+# ==========================================
+# APP CONFIGURATION
+# ==========================================
+
 ctk.set_appearance_mode("Dark")
 ctk.set_default_color_theme("blue")
 
 class ArgusApp(ctk.CTk):
+    """
+    Main Application Window.
+    Inherits from CustomTkinter's CTk class to provide a modern UI.
+    """
+    
     def __init__(self):
         # 1. WINDOWS TASKBAR ICON FIX
-        # This explicit AppUserModelID allows the app to have its own icon in the taskbar
-        # instead of the generic Python icon.
+        # Explicit AppUserModelID allows the app to have its own icon in the taskbar
         myappid = 'propabilia.argus.sorter.2.0'
         try:
             ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
@@ -41,30 +91,36 @@ class ArgusApp(ctk.CTk):
         
         self.base_path = fm.get_application_path()
 
-        # 3. ICON LOADING (Robust)
-        # Sets both the window icon (top left) and taskbar icon
-        icon_path = self.base_path / "icon.png"
-        if icon_path.exists():
-            try:
-                img = PhotoImage(file=str(icon_path))
-                self.iconphoto(True, img)
-                # Force update after 200ms to override CustomTkinter defaults
-                self.after(200, lambda: self.iconphoto(True, img))
-            except Exception as e:
-                print(f"Warning: Could not load icon: {e}")
+        # 3. ICON LOADING (Updated for .ico or .png)
+        ico_path = self.base_path / "icon.ico"
+        png_path = self.base_path / "icon.png"
 
-        # 4. INITIALIZATION
+        try:
+            if ico_path.exists():
+                # Best for Windows Taskbar
+                self.iconbitmap(str(ico_path))
+            elif png_path.exists():
+                # Fallback for Window decoration
+                img = PhotoImage(file=str(png_path))
+                self.iconphoto(True, img)
+                # Force update after 200ms to override OS defaults
+                self.after(200, lambda: self.iconphoto(True, img))
+        except Exception as e:
+            print(f"Warning: Could not load icon: {e}")
+
+        # 4. STATE INITIALIZATION
         config.load()
         self.is_running = False
         self.stop_event = threading.Event()
 
-        # 5. UI SETUP
+        # 5. UI FRAME SETUP
         self.home_frame = ctk.CTkFrame(self, fg_color="transparent")
         self.settings_frame = ctk.CTkFrame(self, fg_color="transparent")
 
         self.setup_home_ui()
         self.setup_settings_ui()
 
+        # Start on Home Page
         self.show_home()
 
     # ==========================================
@@ -72,20 +128,23 @@ class ArgusApp(ctk.CTk):
     # ==========================================
     
     def show_home(self) -> None:
+        """Switches view to the Home/Run dashboard."""
         self.settings_frame.pack_forget()
         self.home_frame.pack(fill="both", expand=True)
 
     def show_settings(self) -> None:
+        """Switches view to the Settings configuration panel."""
         if self.is_running: return
         self.home_frame.pack_forget()
         self.settings_frame.pack(fill="both", expand=True)
 
     def save_and_go_home(self) -> None:
-        """Saves all settings from UI to config and returns home."""
-        # 1. Update Toggles & Folder
+        """Persists all settings from UI inputs to config file and returns home."""
+        # 1. Update Toggles & Folder Paths
         config.APPEND_ORIGINAL_NAME = self.var_append.get()
         config.DISCARD_COA = self.var_discard_coa.get()
         config.SAVE_DEBUG_LOGS = self.var_debug_logs.get()
+        config.USE_GPU = self.var_use_gpu.get()
         config.OUTPUT_FOLDER = self.entry_output.get()
         
         # 2. Update Lists (Helper to parse textbox content)
@@ -97,11 +156,12 @@ class ArgusApp(ctk.CTk):
         config.WEAK_INDICATORS = get_list(self.txt_weak)
         config.FORCE_UPPERCASE = get_list(self.txt_force)
         
-        # 3. Persist to Disk
+        # 3. Save & Navigate
         config.save()
         self.show_home()
 
     def browse_output_folder(self) -> None:
+        """Opens directory picker for Output Folder."""
         folder = filedialog.askdirectory(initialdir=config.OUTPUT_FOLDER)
         if folder:
             self.entry_output.delete(0, "end")
@@ -127,7 +187,7 @@ class ArgusApp(ctk.CTk):
         lbl_desc = ctk.CTkLabel(self.home_frame, text="Automated Image Renaming & Sorting", font=("Roboto", 24), text_color="#AAAAAA")
         lbl_desc.pack(pady=(10, 60)) 
 
-        # Action Button
+        # Main Action Button
         self.btn_run = ctk.CTkButton(
             self.home_frame, text="SORT PHOTOS", font=("Roboto", 20, "bold"), 
             height=80, width=400, fg_color="#2CC985", hover_color="#229A65", 
@@ -140,7 +200,7 @@ class ArgusApp(ctk.CTk):
         self.progress.pack(pady=(50, 20))
         self.progress.set(0)
 
-        # Console Output
+        # Console Output Log
         self.textbox = ctk.CTkTextbox(
             self.home_frame, width=1000, height=300, corner_radius=10, 
             font=("Consolas", 13), fg_color="#181818", text_color="#D0D0D0"
@@ -153,7 +213,7 @@ class ArgusApp(ctk.CTk):
     # ==========================================
     
     def setup_settings_ui(self) -> None:
-        # Header
+        # Header Section
         header_frame = ctk.CTkFrame(self.settings_frame, fg_color="transparent")
         header_frame.pack(fill="x", pady=40)
 
@@ -166,11 +226,11 @@ class ArgusApp(ctk.CTk):
         lbl_title = ctk.CTkLabel(header_frame, text="Configuration", font=("Roboto Medium", 32))
         lbl_title.pack(side="top")
 
-        # Scrollable/Main Content Area
+        # Main Content Container
         content = ctk.CTkFrame(self.settings_frame, fg_color="#2B2B2B", corner_radius=15)
         content.pack(fill="both", expand=True, padx=100, pady=(0, 60))
 
-        # 1. Output Folder Section
+        # 1. Output Folder
         ctk.CTkLabel(content, text="Default Output Folder:", font=("Roboto Medium", 16)).pack(pady=(20, 5), padx=40, anchor="w")
         
         folder_frame = ctk.CTkFrame(content, fg_color="transparent")
@@ -183,7 +243,7 @@ class ArgusApp(ctk.CTk):
         btn_browse = ctk.CTkButton(folder_frame, text="Browse...", width=100, height=35, command=self.browse_output_folder)
         btn_browse.pack(side="right")
 
-        # 2. Toggles Section
+        # 2. Toggles
         toggles_frame = ctk.CTkFrame(content, fg_color="transparent")
         toggles_frame.pack(fill="x", padx=40, pady=10)
         
@@ -194,6 +254,10 @@ class ArgusApp(ctk.CTk):
         self.var_discard_coa = ctk.BooleanVar(value=config.DISCARD_COA)
         sw2 = ctk.CTkSwitch(toggles_frame, text="Discard COA Image", variable=self.var_discard_coa, font=("Roboto", 14), button_color="#2CC985", progress_color="#555555")
         sw2.pack(side="left", padx=20)
+        
+        self.var_use_gpu = ctk.BooleanVar(value=config.USE_GPU)
+        sw_gpu = ctk.CTkSwitch(toggles_frame, text="Use GPU Acceleration", variable=self.var_use_gpu, font=("Roboto", 14), button_color="#2CC985", progress_color="#555555")
+        sw_gpu.pack(side="left", padx=20)
 
         self.var_debug_logs = ctk.BooleanVar(value=config.SAVE_DEBUG_LOGS)
         sw3 = ctk.CTkSwitch(toggles_frame, text="Save Text Logs (.md)", variable=self.var_debug_logs, font=("Roboto", 14), button_color="#2CC985", progress_color="#555555")
@@ -202,7 +266,7 @@ class ArgusApp(ctk.CTk):
         # Divider
         ctk.CTkFrame(content, height=2, fg_color="#444444").pack(fill="x", padx=40, pady=15)
 
-        # 3. Detection Lists (3 Columns)
+        # 3. Detection Lists (Helper function for DRY code)
         lists_frame = ctk.CTkFrame(content, fg_color="transparent")
         lists_frame.pack(fill="both", expand=True, padx=40, pady=(0, 20))
 

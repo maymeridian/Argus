@@ -1,2 +1,30 @@
-/icon.png
-/__pycache__
+# --- Python Basics ---
+__pycache__/
+*.py[cod]
+*$py.class
+
+# --- Distribution / Build ---
+build/
+dist/
+*.spec
+
+# --- Local Environment & Logs ---
+.venv/
+env/
+venv/
+extracted_text/
+*.log
+
+# --- Large Binary Dependencies ---
+# We ignore the 'libraries' folder because it contains 500MB+ of DLLs.
+# You generally don't want these in GitHub.
+# (If you DO want to track them, delete the line below)
+libraries/
+
+# --- IDE Settings ---
+.vscode/
+.idea/
+
+# --- User Configuration ---
+# Optional: Ignore settings if you don't want to commit your local folder paths
+# settings.json

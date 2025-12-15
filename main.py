@@ -4,6 +4,7 @@ main.py
 Author: maymeridian
 Description: The core orchestration script. Coordinates the workflow between OCR scanning,
              consensus data normalization, and the final renaming/sorting process.
+             Supports Multi-SKU grouping and Anchor-Folder sorting.
 """
 
 import sys
@@ -61,9 +62,9 @@ def normalize_descriptions(groups: List[List[Dict]], log_func: Callable[[str], N
     descriptions = []
     for group in groups:
         if not group: continue
-        coa = group[-1]
-        if coa['type'] == 'COA' and coa.get('desc'):
-            descriptions.append(coa['desc'])
+        for item in group:
+            if item['type'] == 'COA' and item.get('desc'):
+                descriptions.append(item['desc'])
             
     if not descriptions:
         return
@@ -84,37 +85,30 @@ def normalize_descriptions(groups: List[List[Dict]], log_func: Callable[[str], N
     
     for group in groups:
         if not group: continue
-        coa = group[-1]
-        if coa['type'] == 'COA' and coa.get('desc') in corrections:
-            coa['desc'] = corrections[coa['desc']]
+        for item in group:
+            if item['type'] == 'COA' and item.get('desc') in corrections:
+                item['desc'] = corrections[item['desc']]
 
 # ==========================================
-# FILE OPERATIONS (Updated)
+# FILE OPERATIONS
 # ==========================================
 
-def _get_show_folder(sku: str) -> str:
+def _get_group_key(sku: str) -> str:
     """
-    Extracts the 'Show Name' prefix from the SKU for sub-folder sorting.
-    Logic: Splits the SKU before the final block of 4+ digits.
-    Ex: THE1000332 -> THE100
-        EXPANSE7586 -> EXPANSE
+    Determines the grouping key by stripping the final numeric ID.
+    Logic: Splits the string before the last block of 4+ digits.
+    Ex: MAGICIANS0305 -> MAGICIANS, THE8000001 -> THE800
     """
-    if not sku:
-        return "Unknown_Show"
+    if not sku: return "UNKNOWN"
     
-    # Regex: Capture everything BEFORE the last sequence of 4+ digits
     match = re.match(r"^(.*?)(?=\d{4,}$)", sku)
     if match and match.group(1):
         return match.group(1).upper()
         
-    # Fallback: If regex fails (e.g. short SKU), just return the whole SKU
-    return sku
+    return sku[:4].upper()
 
 def _get_unique_path(base_path: Path) -> Path:
-    """
-    Generates a unique filename if the target already exists.
-    Ex: File.jpg -> File (1).jpg -> File (2).jpg
-    """
+    """Generates a unique filename if the target already exists."""
     if not base_path.exists():
         return base_path
 
@@ -129,31 +123,62 @@ def _get_unique_path(base_path: Path) -> Path:
             return new_path
         counter += 1
 
-def process_group(group: List[Dict], output_dir: Path, log_func: Callable[[str], None]) -> List[Path]:
-    """
-    Renames and moves a group of files into sub-folders.
-    Includes duplicate detection.
-    """
-    coa_data = group[-1]
+def _merge_skus(coas: List[Dict]) -> str:
+    """Merges multiple SKUs into one string for the filename."""
+    if not coas: return "UNKNOWN"
     
-    item_code = coa_data.get('sku')
-    item_desc = coa_data.get('desc')
+    base_sku = coas[0].get('sku', 'UNKNOWN')
+    if len(coas) == 1:
+        return base_sku
 
-    # 1. Determine Folder & Base Name
-    if not item_code:
-        log_func(f"⚠️ Could not find Item Code in COA: {coa_data['path'].name}")
-        base_name = f"Unknown_{coa_data['path'].stem}"
-        sub_folder = "Unknown_Show"
+    match = re.match(r"^(.*?)(?=\d{4,}$)", base_sku)
+    prefix = match.group(1) if match else ""
+
+    merged = base_sku
+    for coa in coas[1:]:
+        next_sku = coa.get('sku', '')
+        if not next_sku: continue
+        
+        if prefix and next_sku.startswith(prefix):
+            suffix = next_sku[len(prefix):]
+            merged += f"-{suffix}"
+        else:
+            merged += f"-{next_sku}"
+            
+    return merged
+
+def process_group(group: List[Dict], output_dir: Path, 
+                  folder_map: Dict[str, str], log_func: Callable[[str], None]) -> List[Path]:
+    """
+    Renames and moves a group.
+    Uses 'folder_map' to anchor all items of the same Show to the first folder created.
+    """
+    coas = [item for item in group if item['type'] == 'COA']
+    
+    if not coas:
+        primary_sku = "UNKNOWN"
+        item_code_filename = "UNKNOWN"
+        item_desc = f"Orphan_Prop_{group[0]['path'].stem}"
     else:
-        base_name = f"{item_code}-{item_desc}" if item_desc else item_code
-        sub_folder = _get_show_folder(item_code)
+        primary_coa = coas[0]
+        primary_sku = primary_coa.get('sku', 'UNKNOWN')
+        item_code_filename = _merge_skus(coas)
+        item_desc = primary_coa.get('desc', 'Unknown Item')
 
-    # 2. Create Show-Specific Sub-folder
+    # 1. Determine Folder Name (Anchor Strategy)
+    group_key = _get_group_key(primary_sku)
+    
+    if group_key in folder_map:
+        sub_folder = folder_map[group_key]
+    else:
+        sub_folder = primary_sku
+        folder_map[group_key] = sub_folder
+
+    # 2. Create/Target Directory
     target_dir = output_dir / sub_folder
-    # We rely on fm.copy_file or manual mkdir. fm.copy_file handles parents, 
-    # but let's be explicit here to ensure the folder structure is clear.
     target_dir.mkdir(parents=True, exist_ok=True)
 
+    base_name = f"{item_code_filename}-{item_desc}"
     log_func(f"📦 Group: {base_name} -> /{sub_folder}")
 
     successful_moves = []
@@ -168,12 +193,10 @@ def process_group(group: List[Dict], output_dir: Path, log_func: Callable[[str],
 
         suffix = "COA" if is_coa else str(i + 1)
         
-        # Build Initial New Filename
         new_filename = f"{base_name}-{suffix}{original_path.suffix}"
         if config.APPEND_ORIGINAL_NAME:
             new_filename = f"{base_name}-{suffix}_{original_path.stem}{original_path.suffix}"
 
-        # 3. Duplicate Detection (Get Unique Path)
         final_path = _get_unique_path(target_dir / new_filename)
 
         if fm.copy_file(original_path, final_path):
@@ -189,9 +212,6 @@ def run_sorter(file_list: List[str], output_path: Path,
                log_func: Callable[[str], None], 
                progress_func: Callable[[float], None], 
                stop_event: Any) -> None:
-    """
-    The main execution entry point called by the GUI.
-    """
     
     log_func("--- Starting Argus 2.0 ---")
     log_func(f"Selected {len(file_list)} images.")
@@ -203,7 +223,21 @@ def run_sorter(file_list: List[str], output_path: Path,
     
     if stop_event.is_set(): return
     log_func("Initializing AI Engine...")
-    engine = RapidOCR()
+    
+    # --- UPDATED GPU LOGIC ---
+    if config.USE_GPU:
+        # User wants GPU -> Try CUDA, fallback if it fails
+        try:
+            engine = RapidOCR(det_use_cuda=True, cls_use_cuda=True, rec_use_cuda=True)
+            log_func("🚀 GPU Acceleration Enabled (CUDA)")
+        except Exception:
+            log_func("⚠️ GPU request failed. Falling back to CPU.")
+            engine = RapidOCR()
+    else:
+        # User disabled GPU -> Force CPU
+        engine = RapidOCR(det_use_cuda=False, cls_use_cuda=False, rec_use_cuda=False)
+        log_func("💻 CPU Mode Active (User Setting)")
+    # -------------------------
     
     # --- SCANNING PHASE ---
     analyzed_results = []
@@ -229,13 +263,19 @@ def run_sorter(file_list: List[str], output_path: Path,
     # --- GROUPING PHASE ---
     groups = []
     current_group = []
-    for item in analyzed_results:
+    
+    for i, item in enumerate(analyzed_results):
+        current_group.append(item)
         if item['type'] == 'COA':
-            current_group.append(item)
-            groups.append(current_group)
-            current_group = []
-        else:
-            current_group.append(item)
+            next_is_coa = False
+            if i + 1 < len(analyzed_results):
+                if analyzed_results[i+1]['type'] == 'COA':
+                    next_is_coa = True
+            
+            if not next_is_coa:
+                groups.append(current_group)
+                current_group = []
+    
     if current_group:
         groups.append(current_group)
 
@@ -247,6 +287,7 @@ def run_sorter(file_list: List[str], output_path: Path,
     log_func(f"\nProcessing {len(groups)} identified groups...")
     progress_func(0.9)
     
+    folder_map = {}
     files_processed_count = 0
     
     for group in groups:
@@ -256,11 +297,12 @@ def run_sorter(file_list: List[str], output_path: Path,
 
         if not group: continue
         
-        if group[-1]['type'] != 'COA':
+        has_coa = any(item['type'] == 'COA' for item in group)
+        if not has_coa:
             log_func("⚠️ Skipping orphan group (No COA found)")
             continue
         
-        processed = process_group(group, output_path, log_func)
+        processed = process_group(group, output_path, folder_map, log_func)
         files_processed_count += len(processed)
 
     progress_func(1.0)
