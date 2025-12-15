@@ -2,7 +2,7 @@
 
 **Automated Asset Management & OCR Sorting System**
 
-Argus is a specialized desktop application engineered for the automated organization of large-scale memorabilia archives. It leverages a local, AI-powered Optical Character Recognition (OCR) pipeline to analyze digital assets, extract metadata (SKUs and item descriptions), and systematically restructure file directories.
+Argus is a specialized desktop application engineered for the automated organization of large-scale memorabilia archives. It leverages a local, AI-powered Optical Character Recognition (OCR) pipeline to analyze digital assets, extract text (SKUs and item descriptions), and systematically restructure file directories.
 
 Built on **Python 3.12**, **CustomTkinter**, and **ONNX Runtime**, Argus utilizes a custom dependency injection architecture to deliver a fully portable GPU-accelerated environment. This eliminates the need for system-wide CUDA Toolkit installations, allowing for high-performance inference on any NVIDIA-equipped workstation.
 
@@ -54,17 +54,17 @@ Argus is distributed as a standalone, portable executable. No installation wizar
     ```
 
 ### GPU Dependency Injection (Crucial)
-To maintain portability, Argus injects GPU libraries at runtime from a local directory. You must populate the `libraries/` directory in the project root with the specific binaries listed below.
+Argus uses a local `libraries` folder to inject GPU DLLs at runtime. This allows the app to be portable.
 
-**Source:** Extract these from **CUDA Toolkit 12.4** and **cuDNN 9.x**.
+You must create a folder named `libraries` in the project root and populate it with the following NVIDIA binaries:
 
 | Component | Required Binaries |
 | :--- | :--- |
-| **Math Utils** | `cublas64_12.dll`, `cublasLt64_12.dll`, `cusolver64_11.dll` |
+| **Math Utils** | `cublas64_12.dll`, `cublasLt64_12.dll` |
 | **Runtime** | `cudart64_12.dll` |
 | **FFT & Rand** | `cufft64_11.dll`, `curand64_10.dll` |
-| **Compiler** | `nvrtc64_12.dll`, `nvrtc-builtins64_124.dll` |
-| **Deep Neural** | All `cudnn*.dll` binaries (approx. 7-8 files) |
+| **Compiler** | `nvrtc64_120_0.dll` |
+| **Deep Neural** | `cudnn64_9.dll`, `cudnn_adv64_9.dll`, `cudnn_cnn64_9.dll`, `cudnn_ops64_9.dll`, `cudnn_graph64_9.dll`, `cudnn_heuristic64_9.dll`, `cudnn_engines_precompiled64_9.dll`, `cudnn_engines_runtime_compiled64_9.dll` |
 
 *> Note: The `libraries/` folder is excluded from version control via `.gitignore`.*
 
