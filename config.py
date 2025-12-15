@@ -16,7 +16,8 @@ from pathlib import Path
 APPEND_ORIGINAL_NAME = False
 DISCARD_COA = False
 SAVE_DEBUG_LOGS = True 
-USE_GPU = True  # <--- NEW: Default to using GPU
+USE_GPU = True
+GROUP_FOLDERS = True  # <--- NEW: Default to creating subfolders
 
 # Default to "Output" folder next to the app
 OUTPUT_FOLDER = str(fm.get_application_path() / "Output")
@@ -38,7 +39,6 @@ WEAK_INDICATORS = [
 ]
 
 # NEW: Acronyms that should always be fully capitalized
-# (Prevents them from becoming "Gcpd" or "Aka" via Title Case)
 FORCE_UPPERCASE = [
     'GCPD', 'CIA', 'FBI', 'AKA', 'USA', 'UN', 'SSD', 'DHD', 'NASA'
 ]
@@ -50,7 +50,7 @@ def get_settings_path():
     return fm.get_application_path() / "settings.json"
 
 def load():
-    global APPEND_ORIGINAL_NAME, DISCARD_COA, SAVE_DEBUG_LOGS, USE_GPU, OUTPUT_FOLDER
+    global APPEND_ORIGINAL_NAME, DISCARD_COA, SAVE_DEBUG_LOGS, USE_GPU, GROUP_FOLDERS, OUTPUT_FOLDER
     global STRONG_INDICATORS, WEAK_INDICATORS, FORCE_UPPERCASE
     
     path = get_settings_path()
@@ -64,7 +64,8 @@ def load():
         if "APPEND_ORIGINAL_NAME" in data: APPEND_ORIGINAL_NAME = data["APPEND_ORIGINAL_NAME"]
         if "DISCARD_COA" in data: DISCARD_COA = data["DISCARD_COA"]
         if "SAVE_DEBUG_LOGS" in data: SAVE_DEBUG_LOGS = data["SAVE_DEBUG_LOGS"]
-        if "USE_GPU" in data: USE_GPU = data["USE_GPU"]  # <--- Load GPU setting
+        if "USE_GPU" in data: USE_GPU = data["USE_GPU"]
+        if "GROUP_FOLDERS" in data: GROUP_FOLDERS = data["GROUP_FOLDERS"]  # <--- Load new setting
         if "OUTPUT_FOLDER" in data: OUTPUT_FOLDER = data["OUTPUT_FOLDER"]
         
         # Load lists
@@ -81,7 +82,8 @@ def save():
         "APPEND_ORIGINAL_NAME": APPEND_ORIGINAL_NAME,
         "DISCARD_COA": DISCARD_COA,
         "SAVE_DEBUG_LOGS": SAVE_DEBUG_LOGS,
-        "USE_GPU": USE_GPU,  # <--- Save GPU setting
+        "USE_GPU": USE_GPU,
+        "GROUP_FOLDERS": GROUP_FOLDERS,  # <--- Save new setting
         "OUTPUT_FOLDER": OUTPUT_FOLDER,
         "STRONG_INDICATORS": STRONG_INDICATORS,
         "WEAK_INDICATORS": WEAK_INDICATORS,

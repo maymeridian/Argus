@@ -151,7 +151,7 @@ def process_group(group: List[Dict], output_dir: Path,
                   folder_map: Dict[str, str], log_func: Callable[[str], None]) -> List[Path]:
     """
     Renames and moves a group.
-    Uses 'folder_map' to anchor all items of the same Show to the first folder created.
+    Respects config.GROUP_FOLDERS setting.
     """
     coas = [item for item in group if item['type'] == 'COA']
     
@@ -165,21 +165,29 @@ def process_group(group: List[Dict], output_dir: Path,
         item_code_filename = _merge_skus(coas)
         item_desc = primary_coa.get('desc', 'Unknown Item')
 
-    # 1. Determine Folder Name (Anchor Strategy)
-    group_key = _get_group_key(primary_sku)
-    
-    if group_key in folder_map:
-        sub_folder = folder_map[group_key]
+    # 1. Determine Target Directory Logic
+    if config.GROUP_FOLDERS:
+        # Standard logic: Create subfolders based on Show/SKU
+        group_key = _get_group_key(primary_sku)
+        
+        if group_key in folder_map:
+            sub_folder = folder_map[group_key]
+        else:
+            sub_folder = primary_sku
+            folder_map[group_key] = sub_folder
+        
+        target_dir = output_dir / sub_folder
+        log_message = f"📦 Group: {item_code_filename} -> /{sub_folder}"
     else:
-        sub_folder = primary_sku
-        folder_map[group_key] = sub_folder
+        # Flat logic: Dump everything into Root Output
+        target_dir = output_dir
+        log_message = f"📦 Group: {item_code_filename} -> (Root)"
 
     # 2. Create/Target Directory
-    target_dir = output_dir / sub_folder
     target_dir.mkdir(parents=True, exist_ok=True)
 
     base_name = f"{item_code_filename}-{item_desc}"
-    log_func(f"📦 Group: {base_name} -> /{sub_folder}")
+    log_func(log_message)
 
     successful_moves = []
     
@@ -213,7 +221,7 @@ def run_sorter(file_list: List[str], output_path: Path,
                progress_func: Callable[[float], None], 
                stop_event: Any) -> None:
     
-    log_func("--- Starting Argus 2.0 ---")
+    log_func("--- Starting Argus 1.2 ---")
     log_func(f"Selected {len(file_list)} images.")
     
     logs_dir = fm.get_application_path() / "extracted_text"

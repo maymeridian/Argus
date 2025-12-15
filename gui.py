@@ -91,7 +91,7 @@ class ArgusApp(ctk.CTk):
         
         self.base_path = fm.get_application_path()
 
-        # 3. ICON LOADING (Updated for .ico or .png)
+        # 3. ICON LOADING
         ico_path = self.base_path / "icon.ico"
         png_path = self.base_path / "icon.png"
 
@@ -103,7 +103,6 @@ class ArgusApp(ctk.CTk):
                 # Fallback for Window decoration
                 img = PhotoImage(file=str(png_path))
                 self.iconphoto(True, img)
-                # Force update after 200ms to override OS defaults
                 self.after(200, lambda: self.iconphoto(True, img))
         except Exception as e:
             print(f"Warning: Could not load icon: {e}")
@@ -145,6 +144,7 @@ class ArgusApp(ctk.CTk):
         config.DISCARD_COA = self.var_discard_coa.get()
         config.SAVE_DEBUG_LOGS = self.var_debug_logs.get()
         config.USE_GPU = self.var_use_gpu.get()
+        config.GROUP_FOLDERS = self.var_group_folders.get()
         config.OUTPUT_FOLDER = self.entry_output.get()
         
         # 2. Update Lists (Helper to parse textbox content)
@@ -182,14 +182,15 @@ class ArgusApp(ctk.CTk):
 
         # Hero Title
         lbl_title = ctk.CTkLabel(self.home_frame, text="Argus", font=("Roboto", 96, "bold"), text_color="#FFFFFF")
-        lbl_title.pack(pady=(100, 5)) 
+        lbl_title.pack(pady=(80, 20)) 
         
+        # Description (Updated Text)
         lbl_desc = ctk.CTkLabel(self.home_frame, text="Automated Image Renaming & Sorting", font=("Roboto", 24), text_color="#AAAAAA")
-        lbl_desc.pack(pady=(10, 60)) 
+        lbl_desc.pack(pady=(0, 40)) 
 
         # Main Action Button
         self.btn_run = ctk.CTkButton(
-            self.home_frame, text="SORT PHOTOS", font=("Roboto", 20, "bold"), 
+            self.home_frame, text="UPLOAD PHOTOS", font=("Roboto", 20, "bold"), 
             height=80, width=400, fg_color="#2CC985", hover_color="#229A65", 
             corner_radius=40, command=self.handle_button_click
         )
@@ -243,30 +244,46 @@ class ArgusApp(ctk.CTk):
         btn_browse = ctk.CTkButton(folder_frame, text="Browse...", width=100, height=35, command=self.browse_output_folder)
         btn_browse.pack(side="right")
 
-        # 2. Toggles
-        toggles_frame = ctk.CTkFrame(content, fg_color="transparent")
-        toggles_frame.pack(fill="x", padx=40, pady=10)
+        # --- UPDATED: Professional Grid Layout for Toggles ---
         
+        toggles_frame = ctk.CTkFrame(content, fg_color="transparent")
+        toggles_frame.pack(fill="x", padx=40, pady=20)
+
+        # Configure 3 equal columns for perfect alignment
+        toggles_frame.grid_columnconfigure(0, weight=1)
+        toggles_frame.grid_columnconfigure(1, weight=1)
+        toggles_frame.grid_columnconfigure(2, weight=1)
+        
+        # Define Switches
         self.var_append = ctk.BooleanVar(value=config.APPEND_ORIGINAL_NAME)
         sw1 = ctk.CTkSwitch(toggles_frame, text="Append Original Filename", variable=self.var_append, font=("Roboto", 14), button_color="#2CC985", progress_color="#555555")
-        sw1.pack(side="left", padx=(0, 20))
         
         self.var_discard_coa = ctk.BooleanVar(value=config.DISCARD_COA)
         sw2 = ctk.CTkSwitch(toggles_frame, text="Discard COA Image", variable=self.var_discard_coa, font=("Roboto", 14), button_color="#2CC985", progress_color="#555555")
-        sw2.pack(side="left", padx=20)
         
         self.var_use_gpu = ctk.BooleanVar(value=config.USE_GPU)
         sw_gpu = ctk.CTkSwitch(toggles_frame, text="Use GPU Acceleration", variable=self.var_use_gpu, font=("Roboto", 14), button_color="#2CC985", progress_color="#555555")
-        sw_gpu.pack(side="left", padx=20)
-
+        
+        self.var_group_folders = ctk.BooleanVar(value=config.GROUP_FOLDERS)
+        sw_group = ctk.CTkSwitch(toggles_frame, text="Group into Folders", variable=self.var_group_folders, font=("Roboto", 14), button_color="#2CC985", progress_color="#555555")
+        
         self.var_debug_logs = ctk.BooleanVar(value=config.SAVE_DEBUG_LOGS)
         sw3 = ctk.CTkSwitch(toggles_frame, text="Save Text Logs (.md)", variable=self.var_debug_logs, font=("Roboto", 14), button_color="#2CC985", progress_color="#555555")
-        sw3.pack(side="left", padx=20)
+
+        # Place them in a clean 2-row Grid
+        # Row 1
+        sw1.grid(row=0, column=0, padx=10, pady=10, sticky="w")
+        sw2.grid(row=0, column=1, padx=10, pady=10, sticky="w")
+        sw_gpu.grid(row=0, column=2, padx=10, pady=10, sticky="w")
+
+        # Row 2
+        sw_group.grid(row=1, column=0, padx=10, pady=10, sticky="w")
+        sw3.grid(row=1, column=1, padx=10, pady=10, sticky="w")
 
         # Divider
         ctk.CTkFrame(content, height=2, fg_color="#444444").pack(fill="x", padx=40, pady=15)
 
-        # 3. Detection Lists (Helper function for DRY code)
+        # 3. Detection Lists
         lists_frame = ctk.CTkFrame(content, fg_color="transparent")
         lists_frame.pack(fill="both", expand=True, padx=40, pady=(0, 20))
 
@@ -336,7 +353,7 @@ class ArgusApp(ctk.CTk):
             traceback.print_exc()
         
         self.is_running = False
-        self.btn_run.configure(state="normal", text="SORT PHOTOS", fg_color="#2CC985", hover_color="#229A65")
+        self.btn_run.configure(state="normal", text="RENAME PHOTOS", fg_color="#2CC985", hover_color="#229A65")
 
 if __name__ == "__main__":
     app = ArgusApp()

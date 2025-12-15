@@ -3,6 +3,7 @@
     "DISCARD_COA": true,
     "SAVE_DEBUG_LOGS": false,
     "USE_GPU": true,
+    "GROUP_FOLDERS": false,
     "OUTPUT_FOLDER": "C:/Users/maxim/Desktop/Output",
     "STRONG_INDICATORS": [
         "CERTIFICATE OF AUTHENTICITY",
