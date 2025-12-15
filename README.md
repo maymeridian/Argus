@@ -1,106 +1,108 @@
 # Argus
 
-**Automated Image Renaming & Sorting System for Memorabilia Archives.**
+**Automated Asset Management & OCR Sorting System**
 
-Argus is a specialized desktop application designed to organize large collections of digital assets (specifically movie props and Certificates of Authenticity). It utilizes local AI-powered OCR (Optical Character Recognition) to scan images, extract SKUs and item descriptions, and automatically rename and sort files into a structured directory tree.
+Argus is a specialized desktop application engineered for the automated organization of large-scale memorabilia archives. It leverages a local, AI-powered Optical Character Recognition (OCR) pipeline to analyze digital assets, extract metadata (SKUs and item descriptions), and systematically restructure file directories.
 
-Built with **Python**, **CustomTkinter**, and **ONNX Runtime**, Argus features a fully portable GPU acceleration engine that runs on NVIDIA hardware without requiring the user to install the CUDA Toolkit.
-
----
-
-## 🚀 Key Features
-
-* **AI-Powered Scanning:** Uses `RapidOCR` and `ONNX Runtime` to read text from images in milliseconds.
-* **Intelligent Grouping:** Automatically detects "Certificate of Authenticity" (COA) documents and groups them with their associated prop images.
-* **Consensus Normalization:** Analyzing multiple images to fix typos and standardize item descriptions automatically.
-* **Smart Renaming:** Renames files to a standard format: `SKU-Description-Sequence.jpg`.
-* **Anchor Sorting:** Creates folders based on Show Titles or SKU prefixes and moves files automatically.
-* **Portable GPU Engine:** Custom dependency injection allows the app to run with full CUDA acceleration on any PC with NVIDIA drivers—no complex installation required.
-* **Modern GUI:** Clean, dark-themed interface built with CustomTkinter.
+Built on **Python 3.12**, **CustomTkinter**, and **ONNX Runtime**, Argus utilizes a custom dependency injection architecture to deliver a fully portable GPU-accelerated environment. This eliminates the need for system-wide CUDA Toolkit installations, allowing for high-performance inference on any NVIDIA-equipped workstation.
 
 ---
 
-## 📦 Installation & Usage
+## 🚀 Core Capabilities
 
-### For End Users
-Argus is distributed as a portable standalone application.
-
-1.  **Download** the latest release (ZIP archive).
-2.  **Extract** the folder to your preferred location.
-3.  **Run `Argus.exe`**.
-    * *Requirement:* A PC with an NVIDIA Graphics Card and standard Game Ready / Studio Drivers installed.
-
-### How to Use
-1.  **Select Photos:** Click "SORT PHOTOS" and select the images you wish to process.
-2.  **Processing:** Argus will scan, analyze, and group the images. Progress is shown in the console.
-3.  **Result:** Files are copied to the `Output` folder (configurable in Settings), renamed and organized by folder.
+* **High-Performance OCR:** Implements `RapidOCR` via `ONNX Runtime` for millisecond-latency text extraction.
+* **Semantic Grouping:** Automatically identifies "Certificate of Authenticity" (COA) documentation and associates it with corresponding artifact images.
+* **Consensus Normalization:** Algorithms analyze multiple data points within a group to error-correct typos and standardize descriptions across the dataset.
+* **Automated Taxonomy:** Renames files according to a strict schema (`SKU-Description-Sequence.jpg`) and sorts them into Anchor Folders based on SKU prefixes.
+* **Portable GPU Engine:** Proprietary DLL injection logic enables full CUDA acceleration without requiring administrative installation of the CUDA Toolkit.
+* **Modern Interface:** A responsive, dark-themed GUI designed for efficiency and ease of use.
 
 ---
 
-## 🛠️ Development Setup
+## 📦 Installation
 
-If you want to run Argus from source or build it yourself, follow these steps.
+Argus is distributed as a standalone, portable executable. No installation wizard is required.
 
-### 1. Prerequisites
-* Python 3.12+
-* NVIDIA GPU (Recommended)
+### Prerequisites
+* **OS:** Windows 10/11 (64-bit)
+* **Hardware:** NVIDIA Graphics Card (Maxwell architecture or newer recommended)
+* **Drivers:** Standard NVIDIA Game Ready or Studio Drivers
 
-### 2. Dependencies
-Install the required Python packages:
-```bash
-pip install customtkinter rapidocr_onnxruntime onnxruntime-gpu
-```
-### 3. The "Libraries" Folder (**Crucial**)
+### Quick Start
+1.  **Download** the latest release artifact (ZIP).
+2.  **Extract** the archive to a local directory (e.g., `D:\Tools\Argus`).
+3.  **Execute** `Argus.exe`.
 
-Argus uses a local `libraries` folder to inject GPU DLLs at runtime. This allows the app to be portable.
+---
 
-You must create a folder named `libraries` in the project root and populate it with the following NVIDIA binaries (extracted from CUDA 12.4 and cuDNN 9.x):
-```text
-cublas64_12.dll
-cublasLt64_12.dll
-cudart64_12.dll
-cufft64_11.dll
-curand64_10.dll
-cusolver64_11.dll
-nvrtc64_12.dll
-nvrtc-builtins64_124.dll
-cudnn*.dll  (All cuDNN 9.x binaries)
-```
+## 📖 Usage Guide
 
-## 🏗️ Building the Executable
+1.  **Initialization:** Launch the application. The console will verify the initialization of the ONNX inference engine.
+2.  **Ingestion:** Click **"SORT PHOTOS"** and select the directory or specific images for processing.
+3.  **Processing:** The system will scan, group, and normalize metadata in real-time. Logs are displayed in the application console.
+4.  **Output:** Processed files are moved to the configured `Output` directory, organized by show title or SKU group.
 
-This project includes a build script that uses **PyInstaller** to package the application, assets, and GPU libraries into a single folder.
+---
 
-1.  Ensure you have the `icon.ico` file in the root directory.
-2.  Run the build script:
+## 🛠️ Development Documentation
 
-    ```bat
-    build.bat
+### Environment Setup
+1.  Ensure **Python 3.12+** is installed.
+2.  Install dependencies via pip:
+    ```bash
+    pip install customtkinter rapidocr_onnxruntime onnxruntime-gpu
     ```
 
-3.  The final output will be located in `dist/Argus`.
+### GPU Dependency Injection (Crucial)
+To maintain portability, Argus injects GPU libraries at runtime from a local directory. You must populate the `libraries/` directory in the project root with the specific binaries listed below.
 
-**Build Script Logic:**
-The `build.bat` script automatically:
-* Cleans previous build artifacts.
-* Bundles the `libraries` folder.
-* Collects CustomTkinter and RapidOCR themes.
-* Sets the executable icon and Window taskbar ID.
+**Source:** Extract these from **CUDA Toolkit 12.4** and **cuDNN 9.x**.
+
+| Component | Required Binaries |
+| :--- | :--- |
+| **Math Utils** | `cublas64_12.dll`, `cublasLt64_12.dll`, `cusolver64_11.dll` |
+| **Runtime** | `cudart64_12.dll` |
+| **FFT & Rand** | `cufft64_11.dll`, `curand64_10.dll` |
+| **Compiler** | `nvrtc64_12.dll`, `nvrtc-builtins64_124.dll` |
+| **Deep Neural** | All `cudnn*.dll` binaries (approx. 7-8 files) |
+
+*> Note: The `libraries/` folder is excluded from version control via `.gitignore`.*
+
+---
+
+## 🏗️ Build Pipeline
+
+This repository includes a `build.bat` script utilizing **PyInstaller** to compile the application into a single-folder distribution.
+
+### Build Instructions
+1.  Verify `icon.ico` is present in the project root.
+2.  Execute the build script:
+    ```cmd
+    build.bat
+    ```
+3.  The compiled artifact will be generated in `dist/Argus`.
+
+**Script Actions:**
+* Sanitizes previous build artifacts (`build/`, `dist/`).
+* Bundles the `libraries/` directory and `settings.json`.
+* Hooks CustomTkinter and RapidOCR resources.
+* Embeds the application icon and assigns the Windows AppUserModelID.
 
 ---
 
 ## ⚙️ Configuration
 
-Settings are persisted in `settings.json`. You can modify these via the GUI "Settings" menu:
+Runtime behavior is controlled via `settings.json` or the in-app **Settings** menu.
 
-* **Output Folder:** Destination for sorted files.
-* **GPU Acceleration:** Toggle between CUDA (Fast) and CPU (Compatibility) modes.
-* **Discard COA:** Option to rename but exclude the actual Certificate image from the final folder.
-* **Detection Lists:** Customize "Strong" and "Weak" keywords used to identify Certificates.
+* **Output Path:** target directory for organized assets.
+* **Compute Backend:** Switch between `CUDA` (GPU) and `CPU` modes.
+* **Asset Filtering:** Toggle exclusion of raw COA images from the final output.
+* **Heuristics:** Customizable "Strong" and "Weak" keyword lists for document classification.
 
 ---
 
 ## 📝 License
 
-Proprietary / Internal Tool.
+**Proprietary Software.**
+Internal Tooling. All rights reserved.
 *Author: maymeridian*
