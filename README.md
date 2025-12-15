@@ -50,7 +50,7 @@ Argus is distributed as a standalone, portable executable. No installation wizar
 1.  Ensure **Python 3.12+** is installed.
 2.  Install dependencies via pip:
     ```bash
-    pip install customtkinter rapidocr_onnxruntime onnxruntime-gpu
+    pip install -r requirements.txt
     ```
 
 ### GPU Dependency Injection (Crucial)
