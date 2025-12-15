@@ -66,3 +66,41 @@ nvrtc64_12.dll
 nvrtc-builtins64_124.dll
 cudnn*.dll  (All cuDNN 9.x binaries)
 ```
+
+## 🏗️ Building the Executable
+
+This project includes a build script that uses **PyInstaller** to package the application, assets, and GPU libraries into a single folder.
+
+1.  Ensure you have the `icon.ico` file in the root directory.
+2.  Run the build script:
+
+    ```bat
+    build.bat
+    ```
+
+3.  The final output will be located in `dist/Argus`.
+
+**Build Script Logic:**
+The `build.bat` script automatically:
+* Cleans previous build artifacts.
+* Bundles the `libraries` folder.
+* Collects CustomTkinter and RapidOCR themes.
+* Sets the executable icon and Window taskbar ID.
+
+---
+
+## ⚙️ Configuration
+
+Settings are persisted in `settings.json`. You can modify these via the GUI "Settings" menu:
+
+* **Output Folder:** Destination for sorted files.
+* **GPU Acceleration:** Toggle between CUDA (Fast) and CPU (Compatibility) modes.
+* **Discard COA:** Option to rename but exclude the actual Certificate image from the final folder.
+* **Detection Lists:** Customize "Strong" and "Weak" keywords used to identify Certificates.
+
+---
+
+## 📝 License
+
+Proprietary / Internal Tool.
+*Author: maymeridian*
