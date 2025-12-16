@@ -127,7 +127,10 @@ def _merge_skus(coas: List[Dict]) -> str:
     """Merges multiple SKUs into one string for the filename."""
     if not coas: return "UNKNOWN"
     
-    base_sku = coas[0].get('sku', 'UNKNOWN')
+    # --- FIX: Safe Retrieval using 'or' ---
+    # .get() returns None if key exists but is None. We need a string string "UNKNOWN".
+    base_sku = coas[0].get('sku') or "UNKNOWN"
+    
     if len(coas) == 1:
         return base_sku
 
@@ -136,7 +139,7 @@ def _merge_skus(coas: List[Dict]) -> str:
 
     merged = base_sku
     for coa in coas[1:]:
-        next_sku = coa.get('sku', '')
+        next_sku = coa.get('sku') or ""
         if not next_sku: continue
         
         if prefix and next_sku.startswith(prefix):
@@ -161,9 +164,10 @@ def process_group(group: List[Dict], output_dir: Path,
         item_desc = f"Orphan_Prop_{group[0]['path'].stem}"
     else:
         primary_coa = coas[0]
-        primary_sku = primary_coa.get('sku', 'UNKNOWN')
+        # --- FIX: Safe Retrieval ---
+        primary_sku = primary_coa.get('sku') or "UNKNOWN"
         item_code_filename = _merge_skus(coas)
-        item_desc = primary_coa.get('desc', 'Unknown Item')
+        item_desc = primary_coa.get('desc') or "Unknown Item"
 
     # 1. Determine Target Directory Logic
     if config.GROUP_FOLDERS:
@@ -221,7 +225,7 @@ def run_sorter(file_list: List[str], output_path: Path,
                progress_func: Callable[[float], None], 
                stop_event: Any) -> None:
     
-    log_func("--- Starting Argus 1.2 ---")
+    log_func("--- Starting Argus ---")
     log_func(f"Selected {len(file_list)} images.")
     
     logs_dir = fm.get_application_path() / "extracted_text"

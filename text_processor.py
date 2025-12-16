@@ -64,6 +64,9 @@ def _fix_sku_tail(sku: str) -> str:
     Example: 
         WHISTLEBLOWEROO01 -> WHISTLEBLOWER0001
     """
+    # --- CRASH FIX: Handle None ---
+    if not sku: return ""
+
     # Regex: Match suffix of 4+ characters containing only Digits or 'O'
     match = re.search(r'([0-9O]{4,})$', sku)
     
@@ -81,6 +84,9 @@ def _fix_typo_zeros(text: str) -> str:
     """
     Corrects common OCR confusions between '0' (zero) and 'O' (letter) in descriptions.
     """
+    # --- CRASH FIX: Handle None ---
+    if not text: return ""
+
     # 1. Sandwich Fix: Digit + O + Digit -> 0 (e.g., 2O24 -> 2024)
     text = re.sub(r'(?<=\d)O(?=\d)', '0', text, flags=re.IGNORECASE)
 
@@ -91,11 +97,8 @@ def _fix_typo_zeros(text: str) -> str:
     # 3. Word-based Logic
     def repl(m):
         word = m.group(0)
-        # If pure digits, return as is (prevents changing 100 -> 1OO)
         if word.isdigit(): return word
-        # If mixed digits (e.g., S01), return as is (likely a code)
         if any(c.isdigit() and c != '0' for c in word): return word
-        # Otherwise, assume it's a word typo (H00CH -> HOOCH)
         return word.replace('0', 'O')
     
     return re.sub(r'\b\w*0\w*\b', repl, text)
@@ -107,6 +110,9 @@ def _move_season_code(text: str) -> Tuple[str, str]:
     Returns:
         Tuple[str, str]: (Description without code, The extracted code)
     """
+    # --- CRASH FIX: Handle None ---
+    if not text: return "", ""
+
     pattern = r'\(?\bS\d{1,2}E\d{1,2}\b\)?'
     match = re.search(pattern, text, re.IGNORECASE)
     
@@ -125,15 +131,16 @@ def _clean_description(raw_desc: str) -> str:
     Main formatting pipeline for item descriptions.
     Applies regex fixes, casing rules, and formatting standards.
     """
+    # --- CRASH FIX: Handle None ---
+    if not raw_desc: return "Unknown Item"
+
     # 1. Zero/O Typo Fixes
     desc = _fix_typo_zeros(raw_desc)
     
     # 2. Fix Squished Apostrophes (Clarke'sbackpack -> Clarke's backpack)
-    #    Look for 's followed immediately by a letter
     desc = re.sub(r"('s)(?=[a-zA-Z])", r"\1 ", desc, flags=re.IGNORECASE)
 
     # 3. CamelCase Splitter (RussellLightbourne -> Russell Lightbourne)
-    #    Look for lowercase followed immediately by uppercase
     desc = re.sub(r'(?<=[a-z])(?=[A-Z])', ' ', desc)
 
     # 4. Unglue Parentheses
@@ -144,13 +151,11 @@ def _clean_description(raw_desc: str) -> str:
     desc = desc.replace("'S", "'s")  # Fix possessive case ('S -> 's)
 
     # 6. Restore Roman Numerals (e.g., Iii -> III)
-    #    Matches specific Roman numerals often found in movie titles
     roman_pattern = r'\b(Ii|Iii|Iv|Vi|Vii|Viii|Ix|Xii?i?)\b'
     desc = re.sub(roman_pattern, lambda m: m.group(0).upper(), desc)
 
     # 7. Apply Lowercase Rules (Conjunctions, Prepositions)
     for word in LOWERCASE_WORDS:
-        # Negative lookahead (?!\.) ensures we don't lowercase acronyms ending in dot
         pattern = r'\b' + word + r'\b(?!\.)'
         desc = re.sub(pattern, word.lower(), desc, flags=re.IGNORECASE)
 
@@ -160,13 +165,11 @@ def _clean_description(raw_desc: str) -> str:
         desc = re.sub(pattern, word.upper(), desc, flags=re.IGNORECASE)
 
     # 9. Restore Acronym Formatting (A.L.I.E.)
-    #    Finds letter-dot-letter patterns and forces uppercase
     def upper_acronym(m):
         return m.group(0).upper()
     desc = re.sub(r'\b([a-zA-Z]\.)+[a-zA-Z0-9]?\b', upper_acronym, desc)
 
     # 10. Final Character Cleanup
-    #     Allow words, spaces, apostrophes, hyphens, and dots. Remove others.
     desc = re.sub(r'[^\w\s\'\-\.]', ' ', desc)
 
     desc = desc.strip()
@@ -179,6 +182,7 @@ def _clean_description(raw_desc: str) -> str:
 
 def clean_filename(text: str) -> str:
     """Removes illegal characters for Windows filenames."""
+    # --- CRASH FIX: Handle None ---
     if not text: return ""
     return re.sub(r'[<>:"/\\|?*]', '', text).strip()
 
@@ -197,6 +201,7 @@ def extract_details(text: str) -> Tuple[Optional[str], Optional[str]]:
     Returns:
         (Item Code, Cleaned Description) or (None, None)
     """
+    # --- CRASH FIX: The Main Fix ---
     if not text:
         return None, None
         
@@ -205,7 +210,6 @@ def extract_details(text: str) -> Tuple[Optional[str], Optional[str]]:
     raw_desc = None
 
     # --- STRATEGY 1: Standard Regex (Primary) ---
-    # Most COAs follow the pattern: CODE Description was used in...
     pattern = r'([A-Za-z&]+\d{4,7})\s*(.+?)\s+was used in'
     match = re.search(pattern, text, re.IGNORECASE | re.DOTALL)
     if match:
@@ -213,24 +217,19 @@ def extract_details(text: str) -> Tuple[Optional[str], Optional[str]]:
         raw_desc = match.group(2)
 
     # --- STRATEGY 2: Context Anchors (Fallback) ---
-    # Used for layouts like Resident Evil or The 100 where data follows a specific phrase.
     if not raw_code:
         intro_anchors = ["production of the above", "certifies that the following item"]
         
         for i, line in enumerate(lines):
-            # Check if current line contains an anchor
             matched_anchor = next((a for a in intro_anchors if a in line.lower()), None)
             
             if not matched_anchor:
                 continue
                 
-            # Ensure there is a next line to read
             if i + 1 >= len(lines):
                 continue
 
             target_line = lines[i+1]
-            
-            # Regex: Expects a Code (3+ chars) at the start, followed by description
             match_ctx = re.match(r"^([A-Z0-9-]{3,})\s+(.*)$", target_line)
             
             if not match_ctx:
@@ -239,18 +238,32 @@ def extract_details(text: str) -> Tuple[Optional[str], Optional[str]]:
             raw_code = match_ctx.group(1)
             raw_desc = match_ctx.group(2)
 
-            # Special Handling: Multi-line description check (Resident Evil style)
+            # Special Handling: Multi-line description check
             if "production of the above" in matched_anchor and i + 2 < len(lines):
                 next_line = lines[i+2]
-                # If next line isn't a footer, append it to description
                 if "NOT VALID" not in next_line and "www" not in next_line and "Daily Log" in next_line:
                     raw_desc += f" {next_line}"
             
-            # Found data, stop searching
             break
 
     # --- FINAL PROCESSING ---
     if raw_code and raw_desc:
+        
+        # === NEW: De-Merge Logic (Harold Fix) ===
+        # If OCR missed the space (e.g. GOOSEBUMPSO695HAROLD), separate them.
+        # Look for: Digits followed immediately by 3+ letters at end of string.
+        merge_check = re.search(r'(\d+)([A-Za-z]{3,})$', raw_code)
+        if merge_check:
+            # Found a merge! (e.g. 695 + HAROLD)
+            digits = merge_check.group(1)
+            word = merge_check.group(2)
+            
+            # 1. Chop the word off the SKU
+            raw_code = raw_code[:-len(word)]
+            # 2. Add the word to the START of the description
+            raw_desc = f"{word} {raw_desc}"
+        # ========================================
+
         # 1. Clean and Fix SKU
         item_code = clean_filename(raw_code.upper())
         item_code = _fix_sku_tail(item_code)
