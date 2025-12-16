@@ -184,13 +184,13 @@ class ArgusApp(ctk.CTk):
         lbl_title = ctk.CTkLabel(self.home_frame, text="Argus", font=("Roboto", 96, "bold"), text_color="#FFFFFF")
         lbl_title.pack(pady=(80, 20)) 
         
-        # Description (Updated Text)
+        # Description
         lbl_desc = ctk.CTkLabel(self.home_frame, text="Automated Image Renaming & Sorting", font=("Roboto", 24), text_color="#AAAAAA")
         lbl_desc.pack(pady=(0, 40)) 
 
-        # Main Action Button
+        # Main Action Button (Corrected Initial Text)
         self.btn_run = ctk.CTkButton(
-            self.home_frame, text="UPLOAD PHOTOS", font=("Roboto", 20, "bold"), 
+            self.home_frame, text="RENAME PHOTOS", font=("Roboto", 20, "bold"), 
             height=80, width=400, fg_color="#2CC985", hover_color="#229A65", 
             corner_radius=40, command=self.handle_button_click
         )
@@ -244,7 +244,7 @@ class ArgusApp(ctk.CTk):
         btn_browse = ctk.CTkButton(folder_frame, text="Browse...", width=100, height=35, command=self.browse_output_folder)
         btn_browse.pack(side="right")
 
-        # --- UPDATED: Professional Grid Layout for Toggles ---
+        # --- Grid Layout for Toggles ---
         
         toggles_frame = ctk.CTkFrame(content, fg_color="transparent")
         toggles_frame.pack(fill="x", padx=40, pady=20)
