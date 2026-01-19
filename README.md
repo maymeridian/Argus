@@ -90,7 +90,7 @@ This repository includes a `build.bat` script utilizing **PyInstaller** to compi
 
 ---
 
-## ⚙️ Configuration
+## Configuration
 
 Runtime behavior is controlled via `settings.json` or the in-app **Settings** menu.
 
