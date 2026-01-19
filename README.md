@@ -8,7 +8,7 @@ Built on **Python 3.12**, **CustomTkinter**, and **ONNX Runtime**, Argus utilize
 
 ---
 
-## 🚀 Core Capabilities
+## Core Capabilities
 
 * **High-Performance OCR:** Implements `RapidOCR` via `ONNX Runtime` for millisecond-latency text extraction.
 * **Semantic Grouping:** Automatically identifies "Certificate of Authenticity" (COA) documentation and associates it with corresponding artifact images.
@@ -19,7 +19,7 @@ Built on **Python 3.12**, **CustomTkinter**, and **ONNX Runtime**, Argus utilize
 
 ---
 
-## 📦 Installation
+## Installation
 
 Argus is distributed as a standalone, portable executable. No installation wizard is required.
 
@@ -35,7 +35,7 @@ Argus is distributed as a standalone, portable executable. No installation wizar
 
 ---
 
-## 📖 Usage Guide
+## Usage Guide
 
 1.  **Initialization:** Launch the application. The console will verify the initialization of the ONNX inference engine.
 2.  **Ingestion:** Click **"SORT PHOTOS"** and select the directory or specific images for processing.
@@ -44,7 +44,7 @@ Argus is distributed as a standalone, portable executable. No installation wizar
 
 ---
 
-## 🛠️ Development Documentation
+## Development Documentation
 
 ### Environment Setup
 1.  Ensure **Python 3.12+** is installed.
@@ -70,7 +70,7 @@ You must create a folder named `libraries` in the project root and populate it w
 
 ---
 
-## 🏗️ Build Pipeline
+## Build Pipeline
 
 This repository includes a `build.bat` script utilizing **PyInstaller** to compile the application into a single-folder distribution.
 
@@ -101,7 +101,7 @@ Runtime behavior is controlled via `settings.json` or the in-app **Settings** me
 
 ---
 
-## 📝 License
+## License
 
 **Proprietary Software.**
 Internal Tooling. All rights reserved.
